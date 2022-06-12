@@ -1,0 +1,74 @@
+const puppeteer = require("puppeteer-extra")
+const fs = require("fs/promises")
+const StealthPlugin = require("puppeteer-extra-plugin-stealth")
+const AdblockerPlugin = require("puppeteer-extra-plugin-adblocker")
+puppeteer.use(StealthPlugin())
+puppeteer.use(AdblockerPlugin())
+
+
+
+async function start(){
+	const browser = await puppeteer.launch({userDataDir: "user_data"});
+	const page = await browser.newPage();
+	await page.setViewport({ width: 360, height: 1800 });
+	await page.goto("https://kunmanga.com/", {
+		waitUntil: 'networkidle2'
+	})
+	// await page.screenshot({ path: "kunmanga.png" })
+
+	const mangaLinks = await page.evaluate(() => {
+		return Array.from(document.querySelectorAll(".post-title a")).map(x => x.href)
+	})
+
+	const chapterLinks = await page.evaluate(() => {
+		return Array.from(document.querySelectorAll(".chapter .btn-link")).map(x => x.href)
+	})
+
+	const mangachildren = mangaLinks.concat(chapterLinks);
+	
+	// const jsonManga = JSON.stringify(mangachildren);
+
+	// await fs.writeFile("links.json", jsonManga)
+
+	// await fs.writeFile("links.txt", mangachildren.join("\r\n"))
+
+	await browser.close()
+
+	loopthroughPages(["https://kunmanga.com/manga/the-man-with-pretty-lips/","https://kunmanga.com/manga/i-cant-be-this-stupid/"]);
+}
+
+start();
+
+function loopthroughPages(mangachildren){
+
+	mangachildren.forEach(element => {
+
+		child(element)
+
+	});
+}
+
+async function child(element) {
+	const browser = await puppeteer.launch({ headless: false, userDataDir: "user_data" });
+	const page = await browser.newPage();
+	await page.setViewport({ width: 360, height: 1800 });
+	
+	await page.goto(element, {
+		waitUntil: 'networkidle2'
+	})
+	
+	await page.$eval('#comment', el => el.scrollIntoView());
+	await page.type('#comment', 'Pfft 😂');
+	await page.click("#submit");
+	await delay(5000);
+	await browser.close()
+
+}
+
+
+
+function delay(time){
+    return new Promise(function(resolve){
+        setTimeout(resolve, time)
+    });
+}
