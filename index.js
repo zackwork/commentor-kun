@@ -1,6 +1,7 @@
 const puppeteer = require("puppeteer-extra")
 const cheerio = require('cheerio')
 const fs = require("fs/promises")
+const fsr = require("fs")
 const StealthPlugin = require("puppeteer-extra-plugin-stealth")
 const AdblockerPlugin = require("puppeteer-extra-plugin-adblocker")
 puppeteer.use(StealthPlugin())
@@ -11,9 +12,9 @@ start();
 async function start(){
 
 	let linksToVisit = [];
-	const visitedLinks = require('./visitedLinks.json');
+	let rawdata = fsr.readFileSync('visitedLinks.json');
+	let visitedLinks = JSON.parse(rawdata);
 
-	
 
 	
 
@@ -25,7 +26,7 @@ async function start(){
 	});
 
 	const page = await browser.newPage();
-	await page.setViewport({ width: 360, height: 1800 });
+	await page.setViewport({ width: 1366, height: 657 });
 	await page.goto("https://kunmanga.com/", {
 		waitUntil: 'networkidle2'
 	})
@@ -38,17 +39,33 @@ async function start(){
 		return Array.from(document.querySelectorAll(".chapter .btn-link")).map(x => x.href)
 	})
 
-	// linksToVisit = mangaLinks.concat(chapterLinks);
-	linksToVisit = mangaLinks;
+	linksToVisit = mangaLinks.concat(chapterLinks);
+
+	const loginselector = '.site-header .c-sub-header-nav .c-sub-nav_wrap .c-modal_item .btn-active-modal';
+	const needsLogin = await page.$(loginselector);
+
+	if (needsLogin) {
+		await page.click(loginselector);
+		await delay(5000);
+		await page.type(".input.user_login", "emeral");
+		await page.type(".input.user_pass", "12345678tv");
+		await page.click("#rememberme");
+		await delay(1000);
+		await page.click("#loginform .wp-submit");
+		await delay(5000);
+	}
 
 
 	while(linksToVisit.length > 0){
 		const currentUrl = linksToVisit.pop();
 		if(visitedLinks.includes(currentUrl)) continue;
-		
+
 		await page.goto(currentUrl, {
 			waitUntil: 'networkidle2'
 		});
+
+
+
 
 		const textArr = [
 		"Text\r\n1", 
@@ -59,42 +76,25 @@ async function start(){
 		"Text\r\n6"
 		];
 
+
 		const randomNumber = Math.floor(Math.random()*textArr.length);
 
-		// await page.$eval('#comment', el => el.scrollIntoView());
-		// await page.type('#comment', textArr[randomNumber]);
+		await page.$eval('#comment', el => el.scrollIntoView());
+		await page.type('#comment', textArr[randomNumber]);
 		// await page.click("#submit");
 		await delay(8000);
 
 
-
-
-
-
-
-
-
-		// const htmlContent = await page.content()
-
-		// const $ = cheerio.load(htmlContent)
-
-		// const newLinksToVisit = $(".post-title a").map((index, element) => 
-		// 	$(element).attr("href")
-		// 	).get(); 
-		// linksToVisit = [...linksToVisit, ...newLinksToVisit];
 		visitedLinks.push(currentUrl);
 
-		// await delay(5000);
 
 	}
 
-	const jsonManga = JSON.stringify(visitedLinks, null, 4);
-	await fs.unlink("visitedlinks.json");
-	await fs.writeFile("visitedlinks.json", jsonManga);
-
 	await page.screenshot({ path: "kunmanga.png" })
-	console.log(visitedLinks);
-	console.log("Done");
+	
+
+	const jsonManga = JSON.stringify(visitedLinks, null, 4);
+	await fs.writeFile("visitedlinks.json", jsonManga);
 	await browser.close();
 
 }
