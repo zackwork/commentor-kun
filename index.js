@@ -12,7 +12,7 @@ start();
 async function start(){
 
 	let linksToVisit = [];
-	let rawdata = fsr.readFileSync('visitedLinks.json');
+	let rawdata = fsr.readFileSync('visitedlinks.json');
 	let visitedLinks = JSON.parse(rawdata);
 
 
@@ -91,7 +91,7 @@ async function start(){
 	}
 
 	await page.screenshot({ path: "kunmanga.png" })
-	
+
 
 	const jsonManga = JSON.stringify(visitedLinks, null, 4);
 	await fs.writeFile("visitedlinks.json", jsonManga);
