@@ -48,6 +48,10 @@ async function start(){
 	await page.goto("https://kunmanga.com/", {
 		waitUntil: 'networkidle2'
 	})
+
+	await page.click("#navigation-ajax");
+
+	await delay(5000);
 	
 	// await page.screenshot({ path: "done.png" })
 	const mangaLinks = await page.evaluate(() => {
@@ -65,13 +69,13 @@ async function start(){
 
 	if (needsLogin) {
 		await page.click(loginselector);
-		await delay(5000);
+		await delay(10000);
 		await page.type(".input.user_login", "emeral");
 		await page.type(".input.user_pass", "12345678tv");
 		await page.click("#rememberme");
-		await delay(1000);
+		await delay(3000);
 		await page.click("#loginform .wp-submit");
-		await delay(5000);
+		await delay(8000);
 	}
 
 
@@ -102,8 +106,14 @@ async function start(){
 		await page.click("#submit");
 		await delay(8000);
 
+		const errorPage = '#error-page';
+		const needsSkip = await page.$(errorPage);
+		if(!needsSkip){
+		 visitedLinks.push(currentUrl);
+		}
 
-		visitedLinks.push(currentUrl);
+
+		
 
 
 	}
@@ -119,6 +129,8 @@ async function start(){
 
 
 
+
+// Duplicate comment detected; it looks as though you’ve already said that!
 
 
 
